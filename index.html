@@ -39,6 +39,24 @@
     --orb1: #f4ecff; --orb2: #b9a8ff; --orb3: #5a4bb8; --orb4: #17124a;
     --glow: rgba(185, 168, 255, .35);
   }
+  body[data-theme="zen"] {
+    --bg: #2a2119; --bg-top: #5a4632; --bg-low: #2a2119;
+    --accent: #e6c79c;
+    --orb1: #fff8ec; --orb2: #ead2ad; --orb3: #a88a62; --orb4: #4d3b2a;
+    --glow: rgba(240, 215, 175, .35);
+  }
+  body[data-theme="night"] {
+    --bg: #060a15; --bg-top: #182a52; --bg-low: #0a1120;
+    --accent: #ffd58a;
+    --orb1: #fffbea; --orb2: #f1e2b2; --orb3: #a7a1c8; --orb4: #2a3158;
+    --glow: rgba(255, 228, 160, .3);
+  }
+  body[data-theme="mountain"] {
+    --bg: #0b1118; --bg-top: #3b5470; --bg-low: #4a3438;
+    --accent: #9cc8e8;
+    --orb1: #f3fbff; --orb2: #bfe0f2; --orb3: #5f8fb5; --orb4: #26384f;
+    --glow: rgba(170, 210, 240, .32);
+  }
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; }
   body {
@@ -68,7 +86,23 @@
       radial-gradient(1px 1px at 36% 50%, #fff 50%, transparent 51%);
     background-size: 420px 420px;
   }
-  body[data-theme="space"]::before { opacity: .55; }
+  /* ---------- Photo backgrounds ---------- */
+  .bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: var(--bg); }
+  .bg-img {
+    position: absolute; inset: -4%; background-size: cover; background-position: center;
+    opacity: 0; transition: opacity 1.8s ease;
+    animation: drift 70s ease-in-out infinite alternate;
+  }
+  .bg-img.show { opacity: 1; }
+  @keyframes drift { from { transform: scale(1); } to { transform: scale(1.08) translate(-1.5%, -1%); } }
+  .scrim {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--bg) 30%, transparent) 0%,
+      color-mix(in srgb, var(--bg) 50%, transparent) 40%,
+      color-mix(in srgb, var(--bg) 82%, transparent) 100%);
+  }
+  h1, .sub, .breath, .clock { text-shadow: 0 1px 12px rgba(0, 0, 0, .55); }
 
   main { max-width: 940px; margin: 0 auto; padding: 36px 16px 56px; }
   header { text-align: center; }
@@ -82,10 +116,11 @@
   .themes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 620px; margin: 26px auto 0; }
   .theme {
     appearance: none; cursor: pointer; text-align: left; color: var(--fg);
-    border: 1px solid var(--line); background: var(--card); border-radius: 16px; padding: 14px 14px 12px;
+    border: 1px solid var(--line); background: color-mix(in srgb, var(--bg) 50%, transparent); border-radius: 16px; padding: 14px 14px 12px;
     font: inherit; transition: border-color .3s, background .3s;
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
   }
-  .theme:hover { background: var(--card-hi); }
+  .theme:hover { background: color-mix(in srgb, var(--bg) 35%, transparent); }
   .theme[aria-checked="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
   .theme .swatch { display: block; height: 6px; border-radius: 3px; margin-bottom: 10px; }
   .theme strong { display: block; font-family: "Cormorant Garamond", Georgia, serif; font-weight: 500; font-size: 22px; line-height: 1.1; }
@@ -127,7 +162,10 @@
   /* ---------- Panels ---------- */
   .grid { display: grid; grid-template-columns: 1fr 1.35fr; gap: 18px; }
   @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
-  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 20px; }
+  .panel {
+    background: color-mix(in srgb, var(--bg) 58%, transparent); border: 1px solid var(--line); border-radius: 18px; padding: 20px;
+    -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  }
   .panel h2 {
     font-family: "Cormorant Garamond", Georgia, serif; font-weight: 500; font-size: 24px;
     margin: 0 0 14px; letter-spacing: .03em;
@@ -184,11 +222,17 @@
   kbd { border: 1px solid var(--line); border-radius: 5px; padding: 0 5px; font: 12px Inter, sans-serif; }
   @media (prefers-reduced-motion: reduce) {
     body.playing .orb { animation: none; transform: scale(1); }
+    .bg-img { animation: none; }
     .ripple { display: none; }
   }
 </style>
 </head>
 <body data-theme="beach">
+<div class="bg" aria-hidden="true">
+  <div class="bg-img" id="bgA"></div>
+  <div class="bg-img" id="bgB"></div>
+  <div class="scrim"></div>
+</div>
 <main>
   <header>
     <h1>Stillwater</h1>
@@ -244,7 +288,7 @@
     </section>
   </div>
 
-  <footer>All sound is generated live in your browser. Press <kbd>Space</kbd> to begin or end.</footer>
+  <footer>All sound is generated live in your browser. Press <kbd>Space</kbd> to begin or end.<br>Background photos from <a href="https://unsplash.com" target="_blank" rel="noopener" style="color:inherit">Unsplash</a>.</footer>
 </main>
 
 <script>
@@ -312,6 +356,57 @@
       drone: 1.15, bassNote: false,
       reverb: 0.85, ambReverb: 0.6, echo: 0.36, echoSteps: 3,
       sounds: ["shimmer", "solarwind", "comet", "bowl", "chimes"], defaults: ["shimmer", "solarwind", "bowl"],
+    },
+    zen: {
+      name: "Zen garden", desc: "Koto and trickling water", swatch: "linear-gradient(90deg,#5a4632,#e6c79c,#7d8a6a)",
+      root: 52, tempo: 50,                      // E "in" scale (Japanese)
+      scale: [0, 1, 5, 7, 8],
+      chords: [[0, 7, 12, 17], [-4, 1, 8, 12], [-7, 0, 5, 12], [1, 8, 13, 17]],   // open, quartal voicings
+      patterns: [
+        [5, _, _, 7, _, _, _, _, 6, _, 5, _, _, _, _, _],
+        [6, _, _, 8, _, _, 7, _, _, _, _, _, 5, _, _, _],
+        [7, _, _, 5, _, _, _, _, 4, _, 3, _, _, _, _, _],
+        [6, _, _, 7, _, 8, _, _, 6, _, _, _, _, _, _, _],
+      ],
+      melody: "koto", melodyOct: 0, melodyVel: 0.085,
+      pad: { type: "sine", cutoff: 900, detune: 4, level: 0.032, attack: 4, release: 6 },
+      drone: 0.6, bassNote: false,
+      reverb: 0.6, ambReverb: 0.45, echo: 0.18, echoSteps: 4,
+      sounds: ["templebell", "stream", "bamboo", "chimes", "birds"], defaults: ["stream", "bamboo"],
+    },
+    night: {
+      name: "Night", desc: "Electric piano under the stars", swatch: "linear-gradient(90deg,#182a52,#a7a1c8,#ffd58a)",
+      root: 53, tempo: 60,                      // F major, soft jazz colours
+      scale: [0, 2, 4, 7, 9],
+      chords: [[0, 4, 7, 11], [-3, 0, 4, 7], [-7, -3, 0, 4], [-5, 0, 2, 7]],   // Fmaj7 – Dm7 – Bbmaj7 – Csus
+      patterns: [
+        [4, _, 5, _, _, 7, _, _, 6, _, _, 4, _, _, _, _],
+        [3, _, 4, _, _, 6, _, _, 5, _, _, _, _, _, _, _],
+        [2, _, 4, _, _, 5, _, _, 7, _, 6, _, _, _, _, _],
+        [3, _, _, 4, _, _, 5, _, 4, _, _, _, _, _, _, _],
+      ],
+      melody: "epiano", melodyOct: 0, melodyVel: 0.075,
+      pad: { type: "triangle", cutoff: 800, detune: 7, level: 0.022, attack: 3, release: 5 },
+      drone: 0.5, bassNote: true,
+      reverb: 0.5, ambReverb: 0.4, echo: 0.12, echoSteps: 3,
+      sounds: ["crickets", "frogs", "owl", "thunder", "rain"], defaults: ["crickets", "frogs"],
+    },
+    mountain: {
+      name: "Mountain", desc: "Handpan and high-altitude wind", swatch: "linear-gradient(90deg,#3b5470,#9cc8e8,#c99a8a)",
+      root: 50, tempo: 64,                      // D dorian-flavoured, gently rhythmic
+      scale: [0, 2, 3, 7, 9],
+      chords: [[0, 3, 7, 12], [-2, 2, 5, 10], [-7, -3, 0, 5], [-5, -2, 2, 7]],  // Dm – C – G – Am
+      patterns: [
+        [5, _, 7, 5, _, 8, _, 7, 5, _, 7, _, 6, _, _, _],
+        [4, _, 6, 4, _, 7, _, 6, 4, _, 6, _, 5, _, _, _],
+        [5, _, 7, 5, _, 9, _, 8, 7, _, 6, _, 5, _, _, _],
+        [3, _, 5, 3, _, 6, _, 5, 4, _, 5, _, 2, _, _, _],
+      ],
+      melody: "handpan", melodyOct: 0, melodyVel: 0.09,
+      pad: { type: "sawtooth", cutoff: 600, detune: 9, level: 0.014, attack: 4, release: 6 },
+      drone: 1.0, bassNote: true,
+      reverb: 0.55, ambReverb: 0.5, echo: 0.1, echoSteps: 3,
+      sounds: ["mtnwind", "stream", "eagle", "cowbells", "bowl"], defaults: ["mtnwind", "cowbells"],
     },
   };
   const theme = () => THEMES[settings.theme];
@@ -528,12 +623,12 @@
     const m = th.root + 12 + th.melodyOct + th.scale[idx % n] + 12 * Math.floor(idx / n);
     const vel = th.melodyVel * rand(0.8, 1.15);
     const tt = t + rand(0, 0.02);
-    if (th.melody === "kalimba") kalimba(m, tt, vel);
-    else if (th.melody === "glass") glass(m, tt, vel);
-    else {
+    if (th.melody === "flute") {
       let len = 1;
-      while (len < 6 && pat[(local + len) % 16] === _ && local + len < 16) len++;
+      while (len < 6 && local + len < 16 && pat[local + len] === _) len++;
       flute(m, tt, len * stepDur(), vel);
+    } else {
+      INSTRUMENTS[th.melody](m, tt, vel);
     }
   }
 
@@ -581,6 +676,47 @@
   function glass(m, t, vel) {
     struck(m, t, vel, 7, [[1, 1, 1], [2.005, 0.35, 0.6], [4.02, 0.12, 0.3], [6.9, 0.04, 0.15]], 0.04, rand(-0.5, 0.5), session.music);
   }
+  // Koto: bright pluck that quickly darkens, with a small pitch settle.
+  function koto(m, t, vel) {
+    const f = mtof(m);
+    const out = pannerNode(rand(-0.35, 0.35)); out.connect(session.music);
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 2;
+    lp.frequency.setValueAtTime(4200, t);
+    lp.frequency.exponentialRampToValueAtTime(700, t + 1.2);
+    const g = ctx.createGain();
+    strike(g.gain, t, vel, 0.003, 2.4);
+    lp.connect(g).connect(out);
+    for (const [type, amp] of [["sawtooth", 0.35], ["triangle", 1]]) {
+      const ag = gainNode(amp); ag.connect(lp);
+      const o = tone(f, t, ag, type);
+      o.frequency.setValueAtTime(f * 1.012, t);
+      o.frequency.exponentialRampToValueAtTime(f, t + 0.06);
+      o.stop(t + 2.6);
+    }
+  }
+  // Electric piano: simple two-operator FM with a decaying "bark".
+  function epiano(m, t, vel) {
+    const f = mtof(m);
+    const out = pannerNode(rand(-0.3, 0.3)); out.connect(session.music);
+    const g = ctx.createGain();
+    strike(g.gain, t, vel, 0.005, 3.6);
+    // soft tremolo, like a vintage amp
+    const trem = gainNode(1); g.connect(trem).connect(out);
+    const ta = gainNode(0.12); tone(4.2, t, ta).stop(t + 3.8); ta.connect(trem.gain);
+    const car = tone(f, t, g);
+    const modAmt = ctx.createGain();
+    modAmt.gain.setValueAtTime(f * 1.6, t);
+    modAmt.gain.exponentialRampToValueAtTime(f * 0.08, t + 1.4);
+    const mod = tone(f, t, modAmt);
+    modAmt.connect(car.frequency);
+    car.stop(t + 3.8); mod.stop(t + 3.8);
+  }
+  // Handpan: warm fundamental with octave and twelfth overtones.
+  function handpan(m, t, vel) {
+    struck(m, t, vel, 3.2, [[1, 1, 1], [2.005, 0.45, 0.6], [2.99, 0.18, 0.3]], 0.008, rand(-0.4, 0.4), session.music);
+  }
+  const INSTRUMENTS = { kalimba, glass, koto, epiano, handpan };
+
   function flute(m, t, dur, vel) {
     const f = mtof(m);
     const out = pannerNode(rand(-0.2, 0.2)); out.connect(session.music);
@@ -644,6 +780,14 @@
     shimmer:   { name: "Starlight",    desc: "A cluster of glittering tones",color: "#cbbcff", min: 15, max: 40, play: playShimmer },
     solarwind: { name: "Solar wind",   desc: "A whistling cosmic breeze",   color: "#7fd8f0", min: 25, max: 60,  play: playSolarWind },
     comet:     { name: "Comet",        desc: "A tone falling through space",color: "#f0a3d0", min: 30, max: 75,  play: playComet },
+    templebell:{ name: "Temple bell",  desc: "A great bronze bell, far off",color: "#e8b07a", min: 40, max: 100, play: playTempleBell },
+    stream:    { name: "Water stream", desc: "Water bubbling over stones",  color: "#8fd0e8", min: 20, max: 50,  play: playStream },
+    bamboo:    { name: "Bamboo fountain", desc: "A hollow knock as it tips",color: "#c5d98a", min: 20, max: 55,  play: playBamboo },
+    frogs:     { name: "Frogs",        desc: "Croaking by the pond",        color: "#9ed39a", min: 20, max: 55,  play: playFrogs },
+    thunder:   { name: "Distant thunder", desc: "A low, far-away rumble",   color: "#a7a1c8", min: 60, max: 150, play: playThunder },
+    mtnwind:   { name: "Mountain wind",desc: "Gusts over the ridge",        color: "#b8d4e8", min: 15, max: 40,  play: playMountainWind },
+    eagle:     { name: "Eagle",        desc: "A cry high above the valley", color: "#e0b98a", min: 45, max: 110, play: playEagle },
+    cowbells:  { name: "Cowbells",     desc: "A herd grazing far below",    color: "#d9c27a", min: 25, max: 65,  play: playCowbells },
   };
   const OFTEN = [
     { label: "Rarely", mul: 2.2 }, { label: "Seldom", mul: 1.5 }, { label: "Sometimes", mul: 1 },
@@ -891,6 +1035,181 @@
     return dur;
   }
 
+  function playTempleBell(t, dest) {
+    const f = mtof(theme().root - 12 + pick([0, 7]));
+    const out = pannerNode(rand(-0.25, 0.25)); out.connect(dest);
+    const parts = [[0.5, 0.5, 22], [1, 1, 18], [1.183, 0.5, 12], [1.506, 0.35, 9], [2, 0.3, 7], [2.74, 0.15, 5], [3.76, 0.08, 3]];
+    for (const [ratio, amp, decay] of parts) {
+      const g = ctx.createGain();
+      strike(g.gain, t, 0.1 * amp, 0.01, decay);
+      tone(f * ratio, t, g).stop(t + decay + 0.2);
+      g.connect(out);
+    }
+    // wooden striker thud
+    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 350; bp.Q.value = 2;
+    const tg = ctx.createGain(); strike(tg.gain, t, 0.12, 0.003, 0.12);
+    noiseSource(t, 0.3).connect(bp).connect(tg).connect(out);
+    return 18;
+  }
+
+  function playStream(t, dest) {
+    const dur = rand(12, 20);
+    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 650; bp.Q.value = 0.7;
+    const g = gainNode(0);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.035, t + 3);
+    g.gain.setValueAtTime(0.035, t + dur - 3);
+    g.gain.linearRampToValueAtTime(0, t + dur);
+    noiseSource(t, dur).connect(bp).connect(g).connect(dest);
+    const bubbles = Math.floor(dur * 11);
+    for (let i = 0; i < bubbles; i++) {
+      const bt = t + 1 + Math.random() * (dur - 2);
+      const f = rand(380, 1200), len = rand(0.03, 0.08);
+      const bg = ctx.createGain();
+      const o = tone(f, bt, bg);
+      o.frequency.exponentialRampToValueAtTime(f * rand(1.4, 1.9), bt + len);
+      strike(bg.gain, bt, rand(0.006, 0.016), 0.004, len);
+      bg.connect(pannerNode(rand(-0.5, 0.5))).connect(dest);
+      o.stop(bt + len + 0.05);
+    }
+    return dur;
+  }
+
+  function playBamboo(t, dest) {
+    const out = pannerNode(rand(-0.5, 0.5)); out.connect(dest);
+    // water trickling into the tube
+    for (let i = 0; i < 10; i++) {
+      const dt = t + i * rand(0.1, 0.2);
+      const f = rand(900, 1600), dg = ctx.createGain();
+      const o = tone(f, dt, dg);
+      o.frequency.exponentialRampToValueAtTime(f * 1.5, dt + 0.04);
+      strike(dg.gain, dt, rand(0.006, 0.012), 0.003, 0.05);
+      dg.connect(out); o.stop(dt + 0.1);
+    }
+    // the knock, then a smaller bounce
+    const kt = t + 1.9;
+    for (const [off, lvl] of [[0, 1], [0.17, 0.35]]) {
+      const tt = kt + off;
+      const g = ctx.createGain(); strike(g.gain, tt, 0.11 * lvl, 0.002, 0.3);
+      const o = tone(520, tt, g); o.frequency.exponentialRampToValueAtTime(390, tt + 0.08); o.stop(tt + 0.35);
+      g.connect(out);
+      const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1200; bp.Q.value = 4;
+      const ng = ctx.createGain(); strike(ng.gain, tt, 0.18 * lvl, 0.001, 0.06);
+      noiseSource(tt, 0.1).connect(bp).connect(ng).connect(out);
+    }
+    return 3;
+  }
+
+  function playFrogs(t, dest) {
+    const voices = Math.random() < 0.5 ? 1 : 2;
+    let end = t;
+    for (let v = 0; v < voices; v++) {
+      const out = pannerNode(rand(-0.8, 0.8)); out.connect(dest);
+      const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = rand(600, 900); bp.Q.value = 3;
+      bp.connect(out);
+      const f = rand(110, 180), rate = rand(18, 28);
+      let tt = t + v * rand(0.4, 1.2);
+      const croaks = Math.floor(rand(3, 8));
+      for (let c = 0; c < croaks; c++) {
+        const dur = rand(0.16, 0.3);
+        const env = gainNode(0), am = gainNode(0.5);
+        env.gain.setValueAtTime(0, tt);
+        env.gain.linearRampToValueAtTime(0.06, tt + 0.02);
+        env.gain.linearRampToValueAtTime(0, tt + dur);
+        const amAmt = gainNode(0.5); tone(rate, tt, amAmt).stop(tt + dur + 0.05); amAmt.connect(am.gain);
+        const o = tone(f, tt, am, "sawtooth");
+        o.frequency.linearRampToValueAtTime(f * 1.12, tt + dur);
+        am.connect(env).connect(bp);
+        o.stop(tt + dur + 0.05);
+        tt += dur + rand(0.15, 0.6);
+      }
+      end = Math.max(end, tt);
+    }
+    return end - t;
+  }
+
+  function playThunder(t, dest) {
+    const dur = rand(8, 14);
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = rand(150, 220); lp.Q.value = 0.4;
+    const g = gainNode(0);
+    g.gain.setValueAtTime(0, t);
+    // irregular rolling rumble that fades away
+    for (let tt = t; tt < t + dur; tt += rand(0.15, 0.4)) {
+      const fade = 1 - (tt - t) / dur;
+      const build = Math.min(1, (tt - t) / 1.2);
+      g.gain.setTargetAtTime(0.5 * fade * build * rand(0.35, 1), tt, 0.12);
+    }
+    g.gain.setTargetAtTime(0, t + dur, 0.5);
+    const p = pannerNode(rand(-0.5, 0.5));
+    noiseSource(t, dur + 2).connect(lp).connect(g).connect(p).connect(dest);
+    return dur;
+  }
+
+  function playMountainWind(t, dest) {
+    const dur = rand(12, 20);
+    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 2.5;
+    bp.frequency.setValueAtTime(rand(200, 300), t);
+    const g = gainNode(0);
+    g.gain.setValueAtTime(0, t);
+    // a few gusts, each rising and easing off
+    for (let tt = t; tt < t + dur - 2; tt += rand(2.5, 5)) {
+      const fade = Math.sin(Math.PI * (tt - t) / dur);
+      g.gain.setTargetAtTime(0.16 * fade * rand(0.5, 1), tt, 0.9);
+      bp.frequency.setTargetAtTime(rand(300, 800), tt, 1.2);
+    }
+    g.gain.setTargetAtTime(0, t + dur - 2, 0.8);
+    const p = pannerNode(0);
+    if (p.pan) { p.pan.setValueAtTime(rand(-0.7, -0.2), t); p.pan.linearRampToValueAtTime(rand(0.2, 0.7), t + dur); }
+    noiseSource(t, dur + 2).connect(bp).connect(g).connect(p).connect(dest);
+    return dur;
+  }
+
+  function playEagle(t, dest) {
+    const out = pannerNode(rand(-0.8, 0.8)); out.connect(dest);
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 3200;
+    lp.connect(out);
+    const calls = Math.random() < 0.5 ? 1 : 2;
+    let tt = t;
+    for (let c = 0; c < calls; c++) {
+      const f0 = rand(2400, 2800), dur = rand(0.6, 0.9);
+      const g = ctx.createGain();
+      const o = tone(f0, tt, g, "triangle");
+      o.frequency.setValueAtTime(f0 * 0.92, tt);
+      o.frequency.linearRampToValueAtTime(f0, tt + 0.08);
+      o.frequency.exponentialRampToValueAtTime(f0 * 0.66, tt + dur);
+      const va = gainNode(60); tone(rand(22, 30), tt, va).stop(tt + dur + 0.05); va.connect(o.frequency);
+      g.gain.setValueAtTime(0.0001, tt);
+      g.gain.exponentialRampToValueAtTime(0.016, tt + 0.06);
+      g.gain.exponentialRampToValueAtTime(0.0001, tt + dur);
+      g.connect(lp);
+      o.stop(tt + dur + 0.05);
+      tt += dur + rand(0.5, 1.2);
+    }
+    return tt - t;
+  }
+
+  function playCowbells(t, dest) {
+    const out = gainNode(1);
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 2600; // far away
+    out.connect(lp).connect(dest);
+    const bells = [rand(520, 600), rand(640, 760)].map((f) => ({ f, pan: rand(-0.8, 0.8) }));
+    const n = Math.floor(rand(4, 9));
+    let tt = t;
+    for (let i = 0; i < n; i++) {
+      const b = pick(bells);
+      const p = pannerNode(b.pan); p.connect(out);
+      const vel = rand(0.012, 0.025);
+      for (const [ratio, amp, decay] of [[1, 1, 1.1], [1.47, 0.6, 0.8], [2.09, 0.45, 0.6], [2.56, 0.3, 0.45], [3.4, 0.18, 0.3]]) {
+        const g = ctx.createGain();
+        strike(g.gain, tt, vel * amp, 0.002, decay);
+        tone(b.f * ratio, tt, g).stop(tt + decay + 0.1);
+        g.connect(p);
+      }
+      tt += rand(0.35, 1.2);
+    }
+    return tt - t + 1;
+  }
+
   function trigger(id, dest) {
     const s = SOUNDS[id];
     const len = s.play(ctx.currentTime + 0.05, dest);
@@ -929,8 +1248,25 @@
     if (session) { stopSession(3); startSession(); } // crossfade into the new piece
   }
 
+  // Crossfade between two stacked layers once the new photo has loaded.
+  let bgFront = $("bgA"), bgBack = $("bgB"), bgWanted = "";
+  function setBackground(id) {
+    const url = `images/${id}.jpg`;
+    bgWanted = url;
+    const img = new Image();
+    img.onload = () => {
+      if (bgWanted !== url) return; // user already picked another theme
+      bgBack.style.backgroundImage = `url("${url}")`;
+      bgBack.classList.add("show");
+      bgFront.classList.remove("show");
+      [bgFront, bgBack] = [bgBack, bgFront];
+    };
+    img.src = url;
+  }
+
   function renderTheme() {
     document.body.dataset.theme = settings.theme;
+    setBackground(settings.theme);
     for (const b of themesEl.children) b.setAttribute("aria-checked", String(b.dataset.id === settings.theme));
     buildTiles();
   }
