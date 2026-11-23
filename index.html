@@ -1,0 +1,1025 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stillwater</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fg: #ecebf3;
+    --muted: #a2a4bd;
+    --card: rgba(255, 255, 255, .045);
+    --card-hi: rgba(255, 255, 255, .08);
+    --line: rgba(255, 255, 255, .1);
+    --level: 0;
+    /* theme tokens (overridden per theme below) */
+    --bg: #0b1020; --bg-top: #1c2250; --bg-low: #0b1020;
+    --accent: #9fd3c7;
+    --orb1: #e2f6f0; --orb2: #9fd3c7; --orb3: #5571c0; --orb4: #2c2f6e;
+    --glow: rgba(159, 211, 199, .33);
+  }
+  body[data-theme="beach"] {
+    --bg: #0d1c29; --bg-top: #3b5873; --bg-low: #3a2c28;
+    --accent: #f4c58b;
+    --orb1: #fff3dc; --orb2: #f8c27f; --orb3: #e0785c; --orb4: #6d3b58;
+    --glow: rgba(248, 180, 120, .35);
+  }
+  body[data-theme="forest"] {
+    --bg: #08150f; --bg-top: #1f3d2b; --bg-low: #0e1b12;
+    --accent: #a9d590;
+    --orb1: #eef8dc; --orb2: #a9d590; --orb3: #4d8a5c; --orb4: #1b3526;
+    --glow: rgba(169, 213, 144, .3);
+  }
+  body[data-theme="space"] {
+    --bg: #04050d; --bg-top: #1b1544; --bg-low: #04050d;
+    --accent: #b9a8ff;
+    --orb1: #f4ecff; --orb2: #b9a8ff; --orb3: #5a4bb8; --orb4: #17124a;
+    --glow: rgba(185, 168, 255, .35);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    background:
+      radial-gradient(ellipse 120% 60% at 50% 0%, var(--bg-top) 0%, transparent 65%),
+      radial-gradient(ellipse 140% 50% at 50% 110%, var(--bg-low) 0%, transparent 70%),
+      var(--bg);
+    background-attachment: fixed;
+    color: var(--fg);
+    font: 15px/1.5 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 1.2s;
+  }
+  /* starfield for the Space theme */
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: -1; opacity: 0; transition: opacity 1.5s;
+    background-image:
+      radial-gradient(1px 1px at 12% 18%, #fff 50%, transparent 51%),
+      radial-gradient(1px 1px at 28% 72%, #fff 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 44% 34%, #fff 50%, transparent 51%),
+      radial-gradient(1px 1px at 63% 12%, #fff 50%, transparent 51%),
+      radial-gradient(1px 1px at 78% 58%, #fff 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 88% 26%, #fff 50%, transparent 51%),
+      radial-gradient(1px 1px at 8% 88%, #fff 50%, transparent 51%),
+      radial-gradient(1px 1px at 55% 90%, #fff 50%, transparent 51%),
+      radial-gradient(1px 1px at 93% 82%, #fff 50%, transparent 51%),
+      radial-gradient(1px 1px at 36% 50%, #fff 50%, transparent 51%);
+    background-size: 420px 420px;
+  }
+  body[data-theme="space"]::before { opacity: .55; }
+
+  main { max-width: 940px; margin: 0 auto; padding: 36px 16px 56px; }
+  header { text-align: center; }
+  h1 {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-weight: 500; font-size: 46px; letter-spacing: .05em; margin: 0;
+  }
+  .sub { color: var(--muted); margin: 2px 0 0; }
+
+  /* ---------- Theme picker ---------- */
+  .themes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 620px; margin: 26px auto 0; }
+  .theme {
+    appearance: none; cursor: pointer; text-align: left; color: var(--fg);
+    border: 1px solid var(--line); background: var(--card); border-radius: 16px; padding: 14px 14px 12px;
+    font: inherit; transition: border-color .3s, background .3s;
+  }
+  .theme:hover { background: var(--card-hi); }
+  .theme[aria-checked="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  .theme .swatch { display: block; height: 6px; border-radius: 3px; margin-bottom: 10px; }
+  .theme strong { display: block; font-family: "Cormorant Garamond", Georgia, serif; font-weight: 500; font-size: 22px; line-height: 1.1; }
+  .theme span.d { display: block; color: var(--muted); font-size: 12.5px; margin-top: 3px; }
+  @media (max-width: 520px) { .theme span.d { display: none; } .theme strong { font-size: 19px; } }
+
+  /* ---------- Stage ---------- */
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 14px; margin: 18px 0 34px; }
+  .orb-wrap { width: 260px; height: 260px; display: grid; place-items: center; position: relative; }
+  .orb {
+    width: 150px; height: 150px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, var(--orb1) 0%, var(--orb2) 32%, var(--orb3) 72%, var(--orb4) 100%);
+    box-shadow: 0 0 calc(30px + var(--level) * 110px) calc(2px + var(--level) * 26px) var(--glow);
+    transform: scale(.8);
+    position: relative; z-index: 1;
+  }
+  body.playing .orb { animation: breathe 10s ease-in-out infinite; }
+  @keyframes breathe { 0%, 100% { transform: scale(.78); } 50% { transform: scale(1.16); } }
+  .ripple {
+    position: absolute; left: 50%; top: 50%; width: 150px; height: 150px; margin: -75px 0 0 -75px;
+    border-radius: 50%; border: 1.5px solid var(--c, var(--accent));
+    animation: ripple 3.2s ease-out forwards; pointer-events: none; opacity: 0;
+  }
+  @keyframes ripple { 0% { transform: scale(.9); opacity: .7; } 100% { transform: scale(1.75); opacity: 0; } }
+  .breath {
+    font-family: "Cormorant Garamond", Georgia, serif; font-size: 21px; letter-spacing: .12em;
+    color: var(--muted); height: 30px;
+  }
+  .play {
+    appearance: none; border: 1px solid var(--line); background: var(--card-hi); color: var(--fg);
+    font: 500 15px Inter, system-ui, sans-serif; letter-spacing: .04em;
+    padding: 12px 30px; border-radius: 999px; cursor: pointer; min-width: 150px;
+    transition: background .2s, border-color .2s;
+  }
+  .play:hover { background: rgba(255, 255, 255, .13); border-color: rgba(255, 255, 255, .2); }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .clock { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 14px; min-height: 21px; text-align: center; }
+
+  /* ---------- Panels ---------- */
+  .grid { display: grid; grid-template-columns: 1fr 1.35fr; gap: 18px; }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 20px; }
+  .panel h2 {
+    font-family: "Cormorant Garamond", Georgia, serif; font-weight: 500; font-size: 24px;
+    margin: 0 0 14px; letter-spacing: .03em;
+  }
+  .row { display: grid; grid-template-columns: 110px 1fr auto; align-items: center; gap: 10px; margin: 12px 0; }
+  .row label { color: var(--muted); font-size: 13.5px; }
+  .row output { font-size: 13px; color: var(--muted); min-width: 46px; text-align: right; font-variant-numeric: tabular-nums; }
+  select {
+    appearance: none; background: rgba(0, 0, 0, .25) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23a2a4bd' fill='none' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 12px center;
+    color: var(--fg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 32px 8px 12px; font: inherit; font-size: 14px; width: 100%;
+  }
+  select option { background: #1a1f3d; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+
+  /* ---------- Sound tiles ---------- */
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+  .tile {
+    position: relative; border: 1px solid var(--line); border-radius: 14px; background: rgba(0, 0, 0, .15);
+    padding: 12px 12px 12px 14px; display: grid; grid-template-columns: auto 1fr auto; gap: 2px 10px; align-items: center;
+    transition: border-color .3s, background .3s;
+  }
+  .tile.on { border-color: color-mix(in srgb, var(--c) 55%, transparent); background: color-mix(in srgb, var(--c) 9%, transparent); }
+  .tile label { display: contents; cursor: pointer; }
+  .tile input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .switch {
+    grid-row: span 2; width: 34px; height: 20px; border-radius: 999px; background: rgba(255, 255, 255, .14);
+    position: relative; transition: background .25s; cursor: pointer;
+  }
+  .switch::after {
+    content: ""; position: absolute; left: 3px; top: 3px; width: 14px; height: 14px; border-radius: 50%;
+    background: #fff; transition: transform .25s;
+  }
+  .tile input:checked + .switch { background: var(--c); }
+  .tile input:checked + .switch::after { transform: translateX(14px); }
+  .tile input:focus-visible + .switch { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tname { font-weight: 500; font-size: 14.5px; cursor: pointer; }
+  .tdesc { grid-column: 2; color: var(--muted); font-size: 12.5px; cursor: pointer; }
+  .preview {
+    grid-row: 1 / span 2; grid-column: 3; appearance: none; border: 1px solid var(--line); background: transparent;
+    color: var(--muted); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: grid; place-items: center;
+    transition: color .2s, border-color .2s;
+  }
+  .preview:hover { color: var(--fg); border-color: rgba(255, 255, 255, .25); }
+  .preview svg { width: 11px; height: 11px; margin-left: 2px; }
+  .dot {
+    position: absolute; top: 8px; right: 8px; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--c); opacity: 0; transition: opacity .6s; box-shadow: 0 0 8px var(--c);
+  }
+  .tile.active .dot { opacity: 1; animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .35; } }
+  .freq { margin-top: 16px; }
+  .hint { color: var(--muted); font-size: 12.5px; margin: 14px 0 0; }
+  footer { text-align: center; color: var(--muted); font-size: 12.5px; margin-top: 28px; }
+  kbd { border: 1px solid var(--line); border-radius: 5px; padding: 0 5px; font: 12px Inter, sans-serif; }
+  @media (prefers-reduced-motion: reduce) {
+    body.playing .orb { animation: none; transform: scale(1); }
+    .ripple { display: none; }
+  }
+</style>
+</head>
+<body data-theme="beach">
+<main>
+  <header>
+    <h1>Stillwater</h1>
+    <p class="sub">Gentle, repeating meditation music with optional sounds of nature</p>
+  </header>
+
+  <div class="themes" id="themes" role="radiogroup" aria-label="Theme"></div>
+
+  <section class="stage" aria-label="Player">
+    <div class="orb-wrap" id="orbWrap"><div class="orb" aria-hidden="true"></div></div>
+    <div class="breath" id="breath">&nbsp;</div>
+    <button class="play" id="playBtn" type="button">Begin</button>
+    <div class="clock" id="clock"></div>
+  </section>
+
+  <div class="grid">
+    <section class="panel" aria-labelledby="mixH">
+      <h2 id="mixH">Mix</h2>
+      <div class="row">
+        <label for="musicVol">Music</label>
+        <input type="range" id="musicVol" min="0" max="100" value="70">
+        <output id="musicVolOut">70%</output>
+      </div>
+      <div class="row">
+        <label for="ambVol">Sounds</label>
+        <input type="range" id="ambVol" min="0" max="100" value="80">
+        <output id="ambVolOut">80%</output>
+      </div>
+      <div class="row">
+        <label for="masterVol">Master</label>
+        <input type="range" id="masterVol" min="0" max="100" value="80">
+        <output id="masterVolOut">80%</output>
+      </div>
+      <div class="row">
+        <label for="sleep">Sleep timer</label>
+        <select id="sleep">
+          <option value="0">Off</option><option value="10">10 minutes</option><option value="20">20 minutes</option>
+          <option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option>
+        </select>
+        <span></span>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="soundsH">
+      <h2 id="soundsH">Relaxing sounds</h2>
+      <div class="tiles" id="tiles"></div>
+      <div class="row freq">
+        <label for="often">How often</label>
+        <input type="range" id="often" min="0" max="4" step="1" value="2">
+        <output id="oftenOut">Sometimes</output>
+      </div>
+      <p class="hint">Enabled sounds drift in at random moments while the music plays. Use ▶ to hear one now.</p>
+    </section>
+  </div>
+
+  <footer>All sound is generated live in your browser. Press <kbd>Space</kbd> to begin or end.</footer>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ================= Utilities ================= */
+  const $ = (id) => document.getElementById(id);
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
+  const _ = -1; // rest in melody patterns
+
+  /* ================= Themes =================
+     Each theme is its own piece: key, scale, chords, tempo, melody instrument,
+     pad sound, space (reverb/echo), colours and a fitting set of nature sounds. */
+  const THEMES = {
+    beach: {
+      name: "Beach", desc: "Warm kalimba and rolling waves", swatch: "linear-gradient(90deg,#3b5873,#f8c27f,#e0785c)",
+      root: 50, tempo: 72,                      // D major, easy-going
+      scale: [0, 2, 4, 7, 9],
+      chords: [[0, 4, 7, 12], [-5, -1, 2, 7], [-3, 0, 4, 9], [-7, -3, 0, 5]],   // I – V – vi – IV
+      patterns: [
+        [5, 7, 9, _, 7, _, 5, 4, 2, 4, 5, _, 4, _, _, _],
+        [4, 6, 8, _, 6, _, 4, 3, 1, 3, 4, _, 6, _, _, _],
+        [5, 7, 8, _, 7, _, 5, 3, 2, 3, 5, _, 7, _, _, _],
+        [3, 5, 6, _, 5, _, 3, 2, 0, 2, 3, _, 4, _, _, _],
+      ],
+      melody: "kalimba", melodyOct: 12, melodyVel: 0.085,
+      pad: { type: "triangle", cutoff: 1100, detune: 6, level: 0.026, attack: 2.5, release: 4 },
+      drone: 0.55, bassNote: true,
+      reverb: 0.45, ambReverb: 0.3, echo: 0.16, echoSteps: 3,
+      sounds: ["waves", "seagulls", "chimes", "rain", "bowl"], defaults: ["waves", "seagulls"],
+    },
+    forest: {
+      name: "Forest", desc: "Wooden flute and birdsong", swatch: "linear-gradient(90deg,#1f3d2b,#4d8a5c,#a9d590)",
+      root: 52, tempo: 54,                      // E minor pentatonic, dorian chords
+      scale: [0, 3, 5, 7, 10],
+      chords: [[0, 3, 7, 12], [-7, -3, 0, 5], [0, 3, 7, 12], [-2, 2, 5, 10]],   // i – IV – i – VII
+      patterns: [
+        [5, _, _, _, 7, _, 6, _, 5, _, _, _, _, _, _, _],
+        [6, _, _, _, 8, _, 7, _, 6, _, 4, _, _, _, _, _],
+        [5, _, _, _, 3, _, 4, _, 5, _, _, _, _, _, _, _],
+        [4, _, _, _, 6, _, 5, _, 3, _, _, _, 2, _, _, _],
+      ],
+      melody: "flute", melodyOct: 12, melodyVel: 0.07,
+      pad: { type: "triangle", cutoff: 750, detune: 5, level: 0.028, attack: 3.5, release: 5 },
+      drone: 0.85, bassNote: true,
+      reverb: 0.55, ambReverb: 0.4, echo: 0.08, echoSteps: 4,
+      sounds: ["birds", "owl", "crickets", "rain", "chimes"], defaults: ["birds", "crickets"],
+    },
+    space: {
+      name: "Space", desc: "Slow drifting pads and starlight", swatch: "linear-gradient(90deg,#17124a,#5a4bb8,#b9a8ff)",
+      root: 48, tempo: 40,                      // C lydian, very slow
+      scale: [0, 4, 6, 7, 11],
+      chords: [[0, 4, 7, 11], [2, 6, 9, 14], [-3, 4, 7, 11], [-5, 2, 7, 11]],   // Cmaj7 – D/C – Am9 – G
+      patterns: [
+        [10, _, _, _, _, _, _, _, 8, _, _, _, _, _, _, _],
+        [11, _, _, _, _, _, 9, _, _, _, _, _, _, _, _, _],
+        [12, _, _, _, _, _, _, _, 10, _, _, _, 8, _, _, _],
+        [9, _, _, _, _, _, _, _, 7, _, _, _, _, _, _, _],
+      ],
+      melody: "glass", melodyOct: 0, melodyVel: 0.06,
+      pad: { type: "sawtooth", cutoff: 520, detune: 14, level: 0.016, attack: 6, release: 8 },
+      drone: 1.15, bassNote: false,
+      reverb: 0.85, ambReverb: 0.6, echo: 0.36, echoSteps: 3,
+      sounds: ["shimmer", "solarwind", "comet", "bowl", "chimes"], defaults: ["shimmer", "solarwind", "bowl"],
+    },
+  };
+  const theme = () => THEMES[settings.theme];
+
+  /* ================= Settings (per-viewer convenience) ================= */
+  const STORE_KEY = "stillwater.settings.v2";
+  const defaults = { theme: "beach", musicVol: 70, ambVol: 80, masterVol: 80, often: 2, sleep: 0, sounds: {} };
+  for (const [id, t] of Object.entries(THEMES)) {
+    defaults.sounds[id] = Object.fromEntries(t.sounds.map((s) => [s, t.defaults.includes(s)]));
+  }
+  let settings = structuredClone(defaults);
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+    if (saved) {
+      settings = { ...settings, ...saved, sounds: { ...defaults.sounds } };
+      for (const t in defaults.sounds) settings.sounds[t] = { ...defaults.sounds[t], ...((saved.sounds || {})[t] || {}) };
+      if (!THEMES[settings.theme]) settings.theme = "beach";
+    }
+  } catch (e) { /* storage unavailable: use defaults */ }
+  const save = () => { try { localStorage.setItem(STORE_KEY, JSON.stringify(settings)); } catch (e) {} };
+  const soundOn = (id) => !!(settings.sounds[settings.theme] || {})[id];
+
+  /* ================= Audio graph ================= */
+  let ctx = null, noiseBuf, master, musicBus, ambBus, analyser, musicSend, ambSend, echoSend, echoDelay;
+
+  function initAudio() {
+    if (ctx) return;
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate);
+    const nd = noiseBuf.getChannelData(0);
+    for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+
+    // Synthetic stereo hall reverb.
+    const irLen = Math.floor(ctx.sampleRate * 6);
+    const ir = ctx.createBuffer(2, irLen, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = ir.getChannelData(ch);
+      for (let i = 0; i < irLen; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / irLen, 3);
+    }
+    const verb = ctx.createConvolver();
+    verb.buffer = ir;
+
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -16; comp.ratio.value = 3; comp.attack.value = 0.02; comp.release.value = 0.4;
+
+    master = ctx.createGain();
+    analyser = ctx.createAnalyser();
+    analyser.fftSize = 1024;
+    master.connect(comp).connect(analyser).connect(ctx.destination);
+
+    const verbOut = gainNode(0.55);
+    verb.connect(verbOut).connect(master);
+
+    // Feedback echo with darkening repeats.
+    echoDelay = ctx.createDelay(5);
+    const echoLP = ctx.createBiquadFilter(); echoLP.type = "lowpass"; echoLP.frequency.value = 2400;
+    const echoFb = gainNode(0.42);
+    echoDelay.connect(echoLP).connect(echoFb).connect(echoDelay);
+    echoLP.connect(master);
+    echoLP.connect(gainNode(0.3)).connect(verb);
+
+    musicBus = ctx.createGain(); musicBus.connect(master);
+    musicSend = gainNode(0.5); musicBus.connect(musicSend).connect(verb);
+    echoSend = gainNode(0); musicBus.connect(echoSend).connect(echoDelay);
+
+    ambBus = ctx.createGain(); ambBus.connect(master);
+    ambSend = gainNode(0.35); ambBus.connect(ambSend).connect(verb);
+
+    applyVolumes(true);
+    applyThemeAudio();
+  }
+
+  function applyVolumes(immediate) {
+    if (!ctx) return;
+    const t = ctx.currentTime, tc = immediate ? 0.001 : 0.08;
+    const curve = (v) => Math.pow(v / 100, 1.6);
+    master.gain.setTargetAtTime(curve(settings.masterVol), t, tc);
+    musicBus.gain.setTargetAtTime(curve(settings.musicVol), t, tc);
+    ambBus.gain.setTargetAtTime(curve(settings.ambVol) * 1.2, t, tc);
+  }
+
+  function applyThemeAudio() {
+    if (!ctx) return;
+    const th = theme(), t = ctx.currentTime;
+    musicSend.gain.setTargetAtTime(th.reverb, t, 1);
+    ambSend.gain.setTargetAtTime(th.ambReverb, t, 1);
+    echoSend.gain.setTargetAtTime(th.echo, t, 1);
+    echoDelay.delayTime.setTargetAtTime((30 / th.tempo) * th.echoSteps, t, 0.5);
+  }
+
+  const gainNode = (v = 1) => { const g = ctx.createGain(); g.gain.value = v; return g; };
+  function pannerNode(p) {
+    if (ctx.createStereoPanner) { const n = ctx.createStereoPanner(); n.pan.value = p; return n; }
+    return ctx.createGain();
+  }
+  function noiseSource(t, dur) {
+    const s = ctx.createBufferSource();
+    s.buffer = noiseBuf; s.loop = true;
+    s.start(t, Math.random() * 3.5);
+    s.stop(t + dur + 0.2);
+    return s;
+  }
+  function strike(param, t, peak, attack, decay) {
+    param.setValueAtTime(0.0001, t);
+    param.exponentialRampToValueAtTime(peak, t + attack);
+    param.exponentialRampToValueAtTime(0.0001, t + attack + decay);
+  }
+  function tone(f, t, dest, type = "sine") {
+    const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; o.connect(dest); o.start(t); return o;
+  }
+
+  /* ================= Session (one play-through) ================= */
+  let session = null;
+
+  function startSession() {
+    initAudio();
+    ctx.resume();
+    applyThemeAudio();
+    const t = ctx.currentTime;
+    const music = gainNode(0), amb = gainNode(0);
+    music.connect(musicBus); amb.connect(ambBus);
+    music.gain.linearRampToValueAtTime(1, t + 3);
+    amb.gain.linearRampToValueAtTime(1, t + 3);
+
+    session = { theme: settings.theme, music, amb, step: 0, nextTime: t + 0.15, timers: {}, startedAt: performance.now(), sleepAt: 0 };
+    session.drone = startDrone(music);
+    session.tick = setInterval(scheduler, 200);
+    scheduler();
+    for (const id of theme().sounds) if (soundOn(id)) scheduleAmbient(id, true);
+    setSleepTimer();
+  }
+
+  function stopSession(fade = 2.5) {
+    if (!session) return;
+    const s = session;
+    session = null;
+    clearInterval(s.tick);
+    for (const id in s.timers) clearTimeout(s.timers[id]);
+    const t = ctx.currentTime;
+    for (const g of [s.music, s.amb]) {
+      g.gain.cancelScheduledValues(t);
+      g.gain.setValueAtTime(g.gain.value, t);
+      g.gain.linearRampToValueAtTime(0, t + fade);
+    }
+    setTimeout(() => { s.drone.stop(); s.music.disconnect(); s.amb.disconnect(); }, fade * 1000 + 300);
+  }
+
+  /* ================= Music engine ================= */
+  const LOOKAHEAD = 2.0;
+  const stepDur = () => 30 / THEMES[session.theme].tempo; // eighth notes
+
+  function scheduler() {
+    if (!session) return;
+    while (session.nextTime < ctx.currentTime + LOOKAHEAD) {
+      playStep(session.step, session.nextTime);
+      session.nextTime += stepDur();
+      session.step++;
+    }
+  }
+
+  function playStep(step, t) {
+    const th = THEMES[session.theme];
+    const chordIdx = Math.floor(step / 16) % 4;
+    const local = step % 16;
+    const chord = th.chords[chordIdx];
+
+    if (local === 0) {
+      playPad(chord.map((n) => th.root - 12 + n), t, stepDur() * 16, th.pad);
+      if (th.bassNote) bell(th.root - 24 + chord[0], t, 0.1, 5, true);
+    }
+    const pat = th.patterns[chordIdx];
+    const idx = pat[local];
+    if (idx < 0 || Math.random() < 0.07) return;
+    const n = th.scale.length;
+    const m = th.root + 12 + th.melodyOct + th.scale[idx % n] + 12 * Math.floor(idx / n);
+    const vel = th.melodyVel * rand(0.8, 1.15);
+    const tt = t + rand(0, 0.02);
+    if (th.melody === "kalimba") kalimba(m, tt, vel);
+    else if (th.melody === "glass") glass(m, tt, vel);
+    else {
+      let len = 1;
+      while (len < 6 && pat[(local + len) % 16] === _ && local + len < 16) len++;
+      flute(m, tt, len * stepDur(), vel);
+    }
+  }
+
+  function playPad(notes, t, dur, p) {
+    const filt = ctx.createBiquadFilter();
+    filt.type = "lowpass"; filt.frequency.value = p.cutoff; filt.Q.value = 0.6;
+    const lfo = ctx.createOscillator(), lfoAmt = gainNode(p.cutoff * 0.35);
+    lfo.frequency.value = rand(0.04, 0.1);
+    lfo.connect(lfoAmt).connect(filt.frequency);
+    const g = gainNode(0);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(1, t + p.attack);
+    g.gain.setValueAtTime(1, t + dur);
+    g.gain.linearRampToValueAtTime(0, t + dur + p.release);
+    filt.connect(g).connect(session.music);
+    const end = t + dur + p.release + 0.1;
+    lfo.start(t); lfo.stop(end);
+    for (const m of notes) {
+      for (const det of [-p.detune, p.detune]) {
+        const lg = gainNode(p.level); lg.connect(filt);
+        const o = tone(mtof(m), t, lg, p.type);
+        o.detune.value = det;
+        o.stop(end);
+      }
+    }
+  }
+
+  // Partial-based struck tone: [ratio, relative amp, relative decay]
+  function struck(m, t, vel, decay, partials, attack, pan, dest) {
+    const f = mtof(m);
+    const out = pannerNode(pan); out.connect(dest);
+    for (const [ratio, amp, dk] of partials) {
+      const g = ctx.createGain();
+      strike(g.gain, t, vel * amp, attack, decay * dk);
+      const o = tone(f * ratio, t, g); g.connect(out);
+      o.stop(t + attack + decay * dk + 0.2);
+    }
+  }
+  function bell(m, t, vel, decay, low) {
+    struck(m, t, vel, decay, low ? [[1, 1, 1]] : [[1, 1, 1], [2, 0.22, 0.45], [3.01, 0.07, 0.22]], low ? 0.6 : 0.012, low ? 0 : rand(-0.35, 0.35), session.music);
+  }
+  function kalimba(m, t, vel) {
+    struck(m, t, vel, 1.8, [[1, 1, 1], [2, 0.08, 0.35], [5.93, 0.14, 0.08]], 0.004, rand(-0.4, 0.4), session.music);
+  }
+  function glass(m, t, vel) {
+    struck(m, t, vel, 7, [[1, 1, 1], [2.005, 0.35, 0.6], [4.02, 0.12, 0.3], [6.9, 0.04, 0.15]], 0.04, rand(-0.5, 0.5), session.music);
+  }
+  function flute(m, t, dur, vel) {
+    const f = mtof(m);
+    const out = pannerNode(rand(-0.2, 0.2)); out.connect(session.music);
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 2600;
+    const g = gainNode(0);
+    const end = t + dur + 0.5;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vel, t + 0.14);
+    g.gain.setValueAtTime(vel, t + Math.max(0.2, dur - 0.15));
+    g.gain.linearRampToValueAtTime(0, end);
+    g.connect(lp).connect(out);
+    const o = tone(f, t, g, "triangle");
+    const o2g = gainNode(0.18); o2g.connect(g);
+    const o2 = tone(f * 2, t, o2g, "sine");
+    // gentle vibrato that arrives after the attack
+    const vib = ctx.createOscillator(), vibAmt = gainNode(0);
+    vib.frequency.value = rand(4.5, 5.5);
+    vibAmt.gain.setValueAtTime(0, t);
+    vibAmt.gain.linearRampToValueAtTime(f * 0.007, t + 0.5);
+    vib.connect(vibAmt); vibAmt.connect(o.frequency); vibAmt.connect(o2.frequency);
+    vib.start(t);
+    // breath noise
+    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = f * 2; bp.Q.value = 1.5;
+    noiseSource(t, dur + 0.5).connect(bp).connect(gainNode(0.22)).connect(g);
+    for (const x of [o, o2, vib]) x.stop(end + 0.1);
+  }
+
+  function startDrone(dest) {
+    const th = theme(), t = ctx.currentTime, root = th.root;
+    const filt = ctx.createBiquadFilter(); filt.type = "lowpass"; filt.frequency.value = th.melody === "glass" ? 320 : 420;
+    const swell = gainNode(0);
+    swell.gain.linearRampToValueAtTime(th.drone, t + 6);
+    const lfo = ctx.createOscillator(), lfoAmt = gainNode(0.25);
+    lfo.frequency.value = 0.06;
+    const body = gainNode(0.75);
+    lfo.connect(lfoAmt).connect(body.gain);
+    filt.connect(body).connect(swell).connect(dest);
+    const voices = [[-24, "sine", 0.13, 0], [-24, "triangle", 0.045, 7], [-17, "sine", 0.05, -4], [-12, "sine", 0.03, 3]];
+    const oscs = voices.map(([off, type, amp, det]) => {
+      const vg = gainNode(amp); vg.connect(filt);
+      const o = tone(mtof(root + off), t, vg, type);
+      o.detune.value = det;
+      return o;
+    });
+    lfo.start(t);
+    return { stop() { const n = ctx.currentTime + 0.05; oscs.forEach((o) => o.stop(n)); lfo.stop(n); } };
+  }
+
+  /* ================= Ambient sounds ================= */
+  // play(t, dest) schedules a one-off event and returns its approximate length in seconds.
+  const SOUNDS = {
+    waves:     { name: "Ocean wave",   desc: "A slow wave rolling in",     color: "#7fb4f0", min: 12, max: 32,  play: playWave },
+    seagulls:  { name: "Seagulls",     desc: "Gulls calling far away",      color: "#f4c58b", min: 25, max: 70,  play: playSeagulls },
+    birds:     { name: "Birdsong",     desc: "A bird calling nearby",       color: "#a6e07f", min: 12, max: 35,  play: playBirds },
+    owl:       { name: "Owl",          desc: "A soft hoot in the dark",     color: "#d6b98a", min: 35, max: 90,  play: playOwl },
+    crickets:  { name: "Crickets",     desc: "An evening chorus",           color: "#e7a4c8", min: 30, max: 80,  play: playCrickets },
+    rain:      { name: "Rain shower",  desc: "A soft passing shower",       color: "#9aa8ff", min: 45, max: 120, play: playRain },
+    chimes:    { name: "Wind chimes",  desc: "A breeze through metal tubes",color: "#9fd3c7", min: 18, max: 50,  play: playChimes },
+    bowl:      { name: "Singing bowl", desc: "A deep, shimmering strike",   color: "#f0c27a", min: 25, max: 70,  play: playBowl },
+    shimmer:   { name: "Starlight",    desc: "A cluster of glittering tones",color: "#cbbcff", min: 15, max: 40, play: playShimmer },
+    solarwind: { name: "Solar wind",   desc: "A whistling cosmic breeze",   color: "#7fd8f0", min: 25, max: 60,  play: playSolarWind },
+    comet:     { name: "Comet",        desc: "A tone falling through space",color: "#f0a3d0", min: 30, max: 75,  play: playComet },
+  };
+  const OFTEN = [
+    { label: "Rarely", mul: 2.2 }, { label: "Seldom", mul: 1.5 }, { label: "Sometimes", mul: 1 },
+    { label: "Often", mul: 0.65 }, { label: "Very often", mul: 0.4 },
+  ];
+
+  function playBowl(t, dest) {
+    const f = mtof(theme().root - 12 + pick([0, 7, 12]));
+    const out = pannerNode(rand(-0.3, 0.3)); out.connect(dest);
+    for (const [ratio, amp, decay] of [[1, 1, 16], [2.71, 0.42, 10], [5.15, 0.18, 6], [8.43, 0.08, 3.5]]) {
+      for (const beat of [0, rand(1.2, 2.4)]) {
+        const g = ctx.createGain();
+        strike(g.gain, t, 0.09 * amp, 0.012, decay);
+        tone(f * ratio + beat, t, g).stop(t + decay + 0.2);
+        g.connect(out);
+      }
+    }
+    return 14;
+  }
+
+  function playChimes(t, dest) {
+    const th = theme();
+    let tt = t;
+    const n = Math.floor(rand(4, 10));
+    for (let i = 0; i < n; i++) {
+      tt += rand(0.1, 0.65);
+      const m = th.root + 24 + pick(th.scale) + pick([0, 0, 12]);
+      struck(m, tt, rand(0.025, 0.06), 4, [[1, 1, 1], [2.76, 0.35, 0.4], [5.4, 0.12, 0.18]], 0.004, rand(-0.8, 0.8), dest);
+    }
+    return tt - t + 3;
+  }
+
+  function playBirds(t, dest) {
+    const out = pannerNode(rand(-0.75, 0.75));
+    const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 1200;
+    hp.connect(out).connect(dest);
+    const base = rand(2200, 3800);
+    const trill = Math.random() < 0.45;
+    const phrases = Math.floor(rand(1, 3.99));
+    let tt = t;
+    for (let p = 0; p < phrases; p++) {
+      const calls = Math.floor(rand(2, 6));
+      const up = Math.random() < 0.6;
+      for (let c = 0; c < calls; c++) {
+        const dur = rand(0.07, 0.17);
+        const g = ctx.createGain();
+        const o = tone(base, tt, g);
+        o.frequency.setValueAtTime(base * (up ? 0.8 : 1.25), tt);
+        o.frequency.exponentialRampToValueAtTime(base * (up ? 1.3 : 0.85), tt + dur * 0.6);
+        o.frequency.exponentialRampToValueAtTime(base, tt + dur);
+        if (trill) {
+          const la = gainNode(base * 0.06);
+          tone(rand(28, 45), tt, la).stop(tt + dur + 0.05);
+          la.connect(o.frequency);
+        }
+        strike(g.gain, tt, rand(0.02, 0.04), 0.012, dur);
+        g.connect(hp);
+        o.stop(tt + dur + 0.1);
+        tt += dur + rand(0.05, 0.2);
+      }
+      tt += rand(0.6, 1.8);
+    }
+    return tt - t;
+  }
+
+  function playSeagulls(t, dest) {
+    const out = pannerNode(rand(-0.8, 0.8)); out.connect(dest);
+    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1700; bp.Q.value = 1.2;
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 3000; // distance
+    bp.connect(lp).connect(out);
+    const base = rand(950, 1250);
+    const calls = Math.floor(rand(2, 5));
+    let tt = t;
+    for (let c = 0; c < calls; c++) {
+      const dur = c === calls - 1 ? rand(0.5, 0.7) : rand(0.22, 0.34);
+      const g = ctx.createGain();
+      const o = tone(base, tt, g, "sawtooth");
+      o.frequency.setValueAtTime(base * 0.85, tt);
+      o.frequency.linearRampToValueAtTime(base * 1.45, tt + dur * 0.3);
+      o.frequency.linearRampToValueAtTime(base * 0.9, tt + dur);
+      const va = gainNode(base * 0.025);
+      tone(rand(9, 14), tt, va).stop(tt + dur + 0.05);
+      va.connect(o.frequency);
+      g.gain.setValueAtTime(0.0001, tt);
+      g.gain.exponentialRampToValueAtTime(rand(0.012, 0.02), tt + 0.04);
+      g.gain.setValueAtTime(0.015, tt + dur * 0.6);
+      g.gain.exponentialRampToValueAtTime(0.0001, tt + dur);
+      g.connect(bp);
+      o.stop(tt + dur + 0.05);
+      tt += dur + rand(0.08, 0.2);
+    }
+    return tt - t;
+  }
+
+  function playOwl(t, dest) {
+    const out = pannerNode(rand(-0.7, 0.7)); out.connect(dest);
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 900;
+    lp.connect(out);
+    const f = rand(340, 420);
+    // "hoo ... hoo-hoo ... hoooo"
+    const shape = [[0, 0.42], [0.85, 0.2], [1.15, 0.22], [1.75, 0.7]];
+    for (const [off, dur] of shape) {
+      const tt = t + off;
+      const g = ctx.createGain();
+      const o = tone(f, tt, g);
+      o.frequency.setValueAtTime(f * 1.04, tt);
+      o.frequency.exponentialRampToValueAtTime(f * 0.94, tt + dur);
+      g.gain.setValueAtTime(0, tt);
+      g.gain.linearRampToValueAtTime(0.05, tt + 0.06);
+      g.gain.setValueAtTime(0.05, tt + dur * 0.6);
+      g.gain.linearRampToValueAtTime(0, tt + dur);
+      g.connect(lp);
+      o.stop(tt + dur + 0.05);
+      // breathy edge
+      const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = f; bp.Q.value = 6;
+      noiseSource(tt, dur).connect(bp).connect(gainNode(0.25)).connect(g);
+    }
+    return 3;
+  }
+
+  function playWave(t, dest) {
+    const dur = rand(7, 11), peak = t + dur * rand(0.4, 0.5);
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 0.3;
+    lp.frequency.setValueAtTime(220, t);
+    lp.frequency.exponentialRampToValueAtTime(rand(1100, 1600), peak);
+    lp.frequency.exponentialRampToValueAtTime(260, t + dur);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.16, peak);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    const p = pannerNode(0);
+    if (p.pan) { const dir = Math.random() < 0.5 ? -1 : 1; p.pan.setValueAtTime(-0.45 * dir, t); p.pan.linearRampToValueAtTime(0.45 * dir, t + dur); }
+    noiseSource(t, dur).connect(lp).connect(g).connect(p).connect(dest);
+    return dur;
+  }
+
+  function playRain(t, dest) {
+    const dur = rand(22, 45), fi = 6, fo = 7;
+    const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 700;
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 5200;
+    const g = ctx.createGain();
+    const lvl = rand(0.05, 0.08);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(lvl, t + fi);
+    g.gain.setValueAtTime(lvl, t + dur - fo);
+    g.gain.linearRampToValueAtTime(0, t + dur);
+    noiseSource(t, dur).connect(hp).connect(lp).connect(g).connect(dest);
+    const drops = Math.floor(dur * 5);
+    for (let i = 0; i < drops; i++) {
+      const dt = t + fi * 0.5 + Math.random() * (dur - fi * 0.5 - fo * 0.5);
+      const dg = ctx.createGain();
+      const f = rand(1800, 4200);
+      const o = tone(f, dt, dg);
+      o.frequency.exponentialRampToValueAtTime(f * 0.55, dt + 0.035);
+      strike(dg.gain, dt, rand(0.004, 0.014), 0.002, 0.045);
+      dg.connect(pannerNode(rand(-0.9, 0.9))).connect(dest);
+      o.stop(dt + 0.08);
+    }
+    return dur;
+  }
+
+  function playCrickets(t, dest) {
+    const dur = rand(7, 14);
+    const voices = Math.random() < 0.5 ? 1 : 2;
+    for (let v = 0; v < voices; v++) {
+      const pulse = gainNode(0), env = gainNode(0);
+      const start = t + v * rand(0.2, 1.5);
+      const o = tone(rand(4100, 4900), start, pulse);
+      const lvl = rand(0.012, 0.022);
+      env.gain.setValueAtTime(0, start);
+      env.gain.linearRampToValueAtTime(lvl, start + 2);
+      env.gain.setValueAtTime(lvl, start + dur - 2.5);
+      env.gain.linearRampToValueAtTime(0, start + dur);
+      const period = rand(0.45, 0.65);
+      for (let ct = start; ct < start + dur; ct += period) {
+        for (let k = 0; k < 3; k++) {
+          const pt = ct + k * 0.045;
+          pulse.gain.setValueAtTime(0, pt);
+          pulse.gain.linearRampToValueAtTime(1, pt + 0.008);
+          pulse.gain.linearRampToValueAtTime(0, pt + 0.03);
+        }
+      }
+      pulse.connect(env).connect(pannerNode(rand(-0.7, 0.7))).connect(dest);
+      o.stop(start + dur + 0.1);
+    }
+    return dur;
+  }
+
+  function playShimmer(t, dest) {
+    const th = theme();
+    const n = Math.floor(rand(4, 7));
+    let tt = t;
+    for (let i = 0; i < n; i++) {
+      const m = th.root + 36 + pick(th.scale) + pick([0, 12]);
+      const dur = rand(3, 6);
+      const g = gainNode(0);
+      g.gain.setValueAtTime(0, tt);
+      g.gain.linearRampToValueAtTime(rand(0.012, 0.022), tt + dur * 0.4);
+      g.gain.linearRampToValueAtTime(0, tt + dur);
+      const trem = gainNode(1), ta = gainNode(0.5);
+      tone(rand(3, 7), tt, ta).stop(tt + dur + 0.1);
+      ta.connect(trem.gain);
+      const o = tone(mtof(m), tt, trem);
+      trem.connect(g).connect(pannerNode(rand(-0.9, 0.9))).connect(dest);
+      o.stop(tt + dur + 0.1);
+      tt += rand(0.3, 1.1);
+    }
+    return tt - t + 4;
+  }
+
+  function playSolarWind(t, dest) {
+    const dur = rand(10, 16), peak = t + dur * rand(0.35, 0.6);
+    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 9;
+    bp.frequency.setValueAtTime(rand(250, 400), t);
+    bp.frequency.exponentialRampToValueAtTime(rand(1400, 2200), peak);
+    bp.frequency.exponentialRampToValueAtTime(rand(300, 500), t + dur);
+    const g = gainNode(0);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.2, peak);
+    g.gain.linearRampToValueAtTime(0, t + dur);
+    const p = pannerNode(0);
+    if (p.pan) { p.pan.setValueAtTime(rand(-0.8, -0.3), t); p.pan.linearRampToValueAtTime(rand(0.3, 0.8), t + dur); }
+    noiseSource(t, dur).connect(bp).connect(g).connect(p).connect(dest);
+    return dur;
+  }
+
+  function playComet(t, dest) {
+    const dur = rand(3.5, 5.5);
+    const f0 = rand(1600, 2400), f1 = rand(260, 400);
+    const p = pannerNode(0);
+    if (p.pan) { const d = Math.random() < 0.5 ? -1 : 1; p.pan.setValueAtTime(0.85 * d, t); p.pan.linearRampToValueAtTime(-0.85 * d, t + dur); }
+    p.connect(dest);
+    // echo the comet's tail into the music delay as well, for a long trail
+    if (echoDelay) p.connect(gainNode(0.5)).connect(echoDelay);
+    for (const [ratio, amp] of [[1, 1], [1.5, 0.3], [2.003, 0.2]]) {
+      const g = gainNode(0);
+      const o = tone(f0 * ratio, t, g);
+      o.frequency.exponentialRampToValueAtTime(f1 * ratio, t + dur);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.03 * amp, t + 0.6);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      g.connect(p);
+      o.stop(t + dur + 0.1);
+    }
+    return dur;
+  }
+
+  function trigger(id, dest) {
+    const s = SOUNDS[id];
+    const len = s.play(ctx.currentTime + 0.05, dest);
+    flash(id, len, s.color);
+  }
+
+  function scheduleAmbient(id, soon) {
+    if (!session) return;
+    clearTimeout(session.timers[id]);
+    if (!soundOn(id)) return;
+    const s = SOUNDS[id], mul = OFTEN[settings.often].mul;
+    const delay = soon ? rand(3, 12) : rand(s.min, s.max) * mul;
+    session.timers[id] = setTimeout(() => {
+      if (!session || !soundOn(id)) return;
+      trigger(id, session.amb);
+      scheduleAmbient(id, false);
+    }, delay * 1000);
+  }
+
+  /* ================= UI ================= */
+  const themesEl = $("themes"), tilesEl = $("tiles");
+  for (const [id, th] of Object.entries(THEMES)) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "theme"; b.dataset.id = id;
+    b.setAttribute("role", "radio");
+    b.innerHTML = `<span class="swatch" style="background:${th.swatch}"></span><strong>${th.name}</strong><span class="d">${th.desc}</span>`;
+    b.addEventListener("click", () => selectTheme(id));
+    themesEl.appendChild(b);
+  }
+
+  function selectTheme(id) {
+    if (id === settings.theme && document.body.dataset.theme === id) return;
+    settings.theme = id; save();
+    renderTheme();
+    applyThemeAudio();
+    if (session) { stopSession(3); startSession(); } // crossfade into the new piece
+  }
+
+  function renderTheme() {
+    document.body.dataset.theme = settings.theme;
+    for (const b of themesEl.children) b.setAttribute("aria-checked", String(b.dataset.id === settings.theme));
+    buildTiles();
+  }
+
+  const playIcon = '<svg viewBox="0 0 10 12" aria-hidden="true"><path d="M0 0l10 6-10 6z" fill="currentColor"/></svg>';
+  function buildTiles() {
+    tilesEl.innerHTML = "";
+    for (const id of theme().sounds) {
+      const s = SOUNDS[id];
+      const tile = document.createElement("div");
+      tile.className = "tile";
+      tile.dataset.id = id;
+      tile.style.setProperty("--c", s.color);
+      tile.innerHTML = `
+        <label>
+          <input type="checkbox" id="snd-${id}">
+          <span class="switch" aria-hidden="true"></span>
+          <span class="tname">${s.name}</span>
+          <span class="tdesc">${s.desc}</span>
+        </label>
+        <button class="preview" type="button" aria-label="Play ${s.name} once">${playIcon}</button>
+        <span class="dot" aria-hidden="true"></span>`;
+      const cb = tile.querySelector("input");
+      cb.checked = soundOn(id);
+      tile.classList.toggle("on", cb.checked);
+      cb.addEventListener("change", () => {
+        settings.sounds[settings.theme][id] = cb.checked;
+        tile.classList.toggle("on", cb.checked);
+        save();
+        if (session) cb.checked ? scheduleAmbient(id, true) : clearTimeout(session.timers[id]);
+      });
+      tile.querySelector(".preview").addEventListener("click", () => {
+        initAudio(); ctx.resume();
+        trigger(id, session ? session.amb : ambBus);
+      });
+      tilesEl.appendChild(tile);
+    }
+  }
+
+  const activeUntil = {};
+  function flash(id, len, color) {
+    const tile = tilesEl.querySelector(`[data-id="${id}"]`);
+    if (tile) {
+      tile.classList.add("active");
+      const until = performance.now() + len * 1000;
+      activeUntil[id] = until;
+      setTimeout(() => { if (activeUntil[id] === until) tile.classList.remove("active"); }, len * 1000);
+    }
+    const r = document.createElement("div");
+    r.className = "ripple";
+    r.style.setProperty("--c", color);
+    $("orbWrap").appendChild(r);
+    setTimeout(() => r.remove(), 3400);
+  }
+
+  function bindRange(id, fmt, onChange) {
+    const el = $(id), out = $(id + "Out");
+    el.value = settings[id];
+    const show = () => { if (out) out.textContent = fmt(+el.value); };
+    show();
+    el.addEventListener("input", () => { settings[id] = +el.value; show(); save(); onChange && onChange(); });
+  }
+  bindRange("musicVol", (v) => v + "%", () => applyVolumes());
+  bindRange("ambVol", (v) => v + "%", () => applyVolumes());
+  bindRange("masterVol", (v) => v + "%", () => applyVolumes());
+  bindRange("often", (v) => OFTEN[v].label);
+
+  $("sleep").value = settings.sleep;
+  $("sleep").addEventListener("change", (e) => { settings.sleep = +e.target.value; save(); setSleepTimer(); });
+  function setSleepTimer() {
+    if (session) session.sleepAt = settings.sleep ? performance.now() + settings.sleep * 60000 : 0;
+  }
+
+  const playBtn = $("playBtn");
+  function setPlayingUI(on) {
+    document.body.classList.toggle("playing", on);
+    playBtn.textContent = on ? "End session" : "Begin";
+  }
+  function toggle() {
+    if (session) { stopSession(); setPlayingUI(false); }
+    else { startSession(); setPlayingUI(true); }
+  }
+  playBtn.addEventListener("click", toggle);
+  document.addEventListener("keydown", (e) => {
+    if (e.code !== "Space") return;
+    const tag = (e.target.tagName || "").toLowerCase();
+    if (["input", "select", "button", "textarea"].includes(tag)) return;
+    e.preventDefault();
+    toggle();
+  });
+
+  const fmtTime = (ms) => {
+    const s = Math.max(0, Math.floor(ms / 1000));
+    return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+  };
+
+  const tdBuf = new Float32Array(1024);
+  let level = 0;
+  function frame() {
+    const now = performance.now();
+    if (session) {
+      const phase = ((now - session.startedAt) % 10000) / 10000;
+      $("breath").textContent = phase < 0.5 ? "breathe in" : "breathe out";
+      let clock = fmtTime(now - session.startedAt);
+      if (session.sleepAt) {
+        const left = session.sleepAt - now;
+        clock += "  ·  sleep in " + fmtTime(left);
+        if (left <= 0) { stopSession(20); setPlayingUI(false); }
+      }
+      $("clock").textContent = clock;
+    } else {
+      $("breath").innerHTML = "&nbsp;";
+      $("clock").textContent = "";
+    }
+    if (analyser) {
+      analyser.getFloatTimeDomainData(tdBuf);
+      let sum = 0;
+      for (let i = 0; i < tdBuf.length; i++) sum += tdBuf[i] * tdBuf[i];
+      const target = Math.min(1, Math.sqrt(sum / tdBuf.length) * 7);
+      level += (target - level) * 0.08;
+      document.documentElement.style.setProperty("--level", level.toFixed(3));
+    }
+    requestAnimationFrame(frame);
+  }
+
+  renderTheme();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
