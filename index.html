@@ -6,7 +6,7 @@
 <title>Stillwater</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
     --fg: #ecebf3;
@@ -108,24 +108,40 @@
   header { text-align: center; }
   h1 {
     font-family: "Cormorant Garamond", Georgia, serif;
-    font-weight: 500; font-size: 46px; letter-spacing: .05em; margin: 0;
+    font-weight: 300; font-size: 40px; letter-spacing: .32em; text-indent: .32em; /* keeps spaced text centred */
+    text-transform: lowercase; margin: 0; color: rgba(255, 255, 255, .92);
   }
-  .sub { color: var(--muted); margin: 2px 0 0; }
+  .sub {
+    color: rgba(255, 255, 255, .62); margin: 8px 0 0;
+    font-size: 13px; letter-spacing: .08em;
+  }
+  @media (max-width: 520px) { h1 { font-size: 32px; letter-spacing: .26em; text-indent: .26em; } }
 
-  /* ---------- Theme picker ---------- */
-  .themes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 620px; margin: 26px auto 0; }
-  .theme {
-    appearance: none; cursor: pointer; text-align: left; color: var(--fg);
-    border: 1px solid var(--line); background: color-mix(in srgb, var(--bg) 50%, transparent); border-radius: 16px; padding: 14px 14px 12px;
-    font: inherit; transition: border-color .3s, background .3s;
-    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  /* ---------- Theme picker: one quiet frosted bar ---------- */
+  .themes {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 2px;
+    width: fit-content; max-width: 100%; margin: 30px auto 0; padding: 5px;
+    border-radius: 999px; border: 1px solid rgba(255, 255, 255, .1);
+    background: color-mix(in srgb, var(--bg) 35%, transparent);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
   }
-  .theme:hover { background: color-mix(in srgb, var(--bg) 35%, transparent); }
-  .theme[aria-checked="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
-  .theme .swatch { display: block; height: 6px; border-radius: 3px; margin-bottom: 10px; }
-  .theme strong { display: block; font-family: "Cormorant Garamond", Georgia, serif; font-weight: 500; font-size: 22px; line-height: 1.1; }
-  .theme span.d { display: block; color: var(--muted); font-size: 12.5px; margin-top: 3px; }
-  @media (max-width: 520px) { .theme span.d { display: none; } .theme strong { font-size: 19px; } }
+  .theme {
+    appearance: none; cursor: pointer; border: 0; background: transparent;
+    color: rgba(255, 255, 255, .6); padding: 7px 16px; border-radius: 999px;
+    font: 400 18px/1.2 "Cormorant Garamond", Georgia, serif; letter-spacing: .05em; white-space: nowrap;
+    transition: color .4s, background .4s;
+  }
+  .theme:hover { color: rgba(255, 255, 255, .9); }
+  .theme[aria-checked="true"] { color: #fff; background: rgba(255, 255, 255, .13); }
+  .theme-desc {
+    text-align: center; margin: 12px 0 0; min-height: 20px;
+    color: rgba(255, 255, 255, .55); font-size: 12.5px; letter-spacing: .06em;
+    text-shadow: 0 1px 10px rgba(0, 0, 0, .5); transition: opacity .4s;
+  }
+  @media (max-width: 560px) {
+    .themes { display: grid; grid-template-columns: repeat(3, 1fr); border-radius: 22px; width: 100%; max-width: 360px; }
+    .theme { font-size: 17px; padding: 6px 8px; }
+  }
 
   /* ---------- Stage ---------- */
   .stage { display: flex; flex-direction: column; align-items: center; gap: 14px; margin: 18px 0 34px; }
@@ -240,6 +256,7 @@
   </header>
 
   <div class="themes" id="themes" role="radiogroup" aria-label="Theme"></div>
+  <p class="theme-desc" id="themeDesc"></p>
 
   <section class="stage" aria-label="Player">
     <div class="orb-wrap" id="orbWrap"><div class="orb" aria-hidden="true"></div></div>
@@ -1235,7 +1252,8 @@
     const b = document.createElement("button");
     b.type = "button"; b.className = "theme"; b.dataset.id = id;
     b.setAttribute("role", "radio");
-    b.innerHTML = `<span class="swatch" style="background:${th.swatch}"></span><strong>${th.name}</strong><span class="d">${th.desc}</span>`;
+    b.textContent = th.name;
+    b.title = th.desc;
     b.addEventListener("click", () => selectTheme(id));
     themesEl.appendChild(b);
   }
@@ -1267,6 +1285,7 @@
   function renderTheme() {
     document.body.dataset.theme = settings.theme;
     setBackground(settings.theme);
+    $("themeDesc").textContent = theme().desc;
     for (const b of themesEl.children) b.setAttribute("aria-checked", String(b.dataset.id === settings.theme));
     buildTiles();
   }
